@@ -73,7 +73,9 @@ def bedrock(model: Model, system: str, prompt: str) -> Completion:
 def gemini(model: Model, system: str, prompt: str) -> Completion:
     from google import genai  # optional dependency: pip install auto-pr-test[gemini]
     from google.genai import types
-    client = genai.Client()  # GEMINI_API_KEY, or Vertex via GOOGLE_GENAI_USE_VERTEXAI=1
+    # GEMINI_API_KEY, or Vertex via GOOGLE_GENAI_USE_VERTEXAI=1. Pin v1beta: preview
+    # models (gemini-3.1-pro-preview) 404 on the v1 endpoint the SDK may default to.
+    client = genai.Client(http_options=types.HttpOptions(api_version="v1beta"))
     t0 = time.monotonic()
     resp = client.models.generate_content(
         model=model.model, contents=prompt,
