@@ -110,7 +110,7 @@ def main(argv: list[str] | None = None) -> int:
     r.add_argument("--pr", type=int)
     r.add_argument("--diff-file")
     r.add_argument("--title"); r.add_argument("--body"); r.add_argument("--sha"); r.add_argument("--base")
-    r.add_argument("--base-coverage", type=float, help="base branch total coverage %, for the delta")
+    r.add_argument("--base-coverage", type=float, help="base branch total coverage %%, for the delta")
     r.add_argument("--skip-tests", action="store_true")
     r.add_argument("--dry-run", action="store_true", help="do not post to the provider")
     r.add_argument("--json", help="write decision + ledger entry to this file")

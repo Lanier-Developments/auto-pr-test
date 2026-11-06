@@ -48,6 +48,9 @@ runs:
       with:
         python-version: ${{ inputs.python-version }}
         cache: pip
+        # The consumer repo may not be a Python project; cache against the
+        # action's own dependency file, not the workspace's.
+        cache-dependency-path: ${{ github.action_path }}/pyproject.toml
 
     - name: Install auto-pr-test
       shell: bash
@@ -63,8 +66,10 @@ runs:
       shell: bash
       env:
         GITHUB_TOKEN: ${{ inputs.github-token }}
-        AUTO_PR_TEST_MODELS: ${{ inputs.models }}
-        AUTO_PR_TEST_ROUTING: ${{ inputs.routing }}
+        # Default to the action checkout's bundled registry: the pip-installed
+        # package cannot resolve policy/ relative to its own __file__.
+        AUTO_PR_TEST_MODELS: ${{ inputs.models || format('{0}/policy/models.yaml', github.action_path) }}
+        AUTO_PR_TEST_ROUTING: ${{ inputs.routing || format('{0}/policy/routing.yaml', github.action_path) }}
       run: |
         set +e
         args=(review --provider github --pr "${{ inputs.pr-number }}" --policy "${{ inputs.policy }}" --json auto-pr-test.json)
