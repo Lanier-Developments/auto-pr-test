@@ -70,13 +70,18 @@ runs:
         AUTO_PR_TEST_ROUTING: ${{ inputs.routing || format('{0}/policy/routing.yaml', github.action_path) }}
       run: |
         set +e
-        args=(review --provider github --pr "${{ inputs.pr-number }}" --policy "${{ inputs.policy }}" --json auto-pr-test.json)
+        # --policy is a global argument: it goes before the subcommand.
+        args=(--policy "${{ inputs.policy }}" review --provider github --pr "${{ inputs.pr-number }}" --json auto-pr-test.json)
         [ -n "${{ inputs.base-coverage }}" ] && args+=(--base-coverage "${{ inputs.base-coverage }}")
         [ "${{ inputs.dry-run }}" = "true" ] && args+=(--dry-run)
         [ "${{ inputs.skip-tests }}" = "true" ] && args+=(--skip-tests)
         auto-pr-test "${args[@]}" | tee gate.md
         code=$?
-        outcome=$(python -c "import json;print(json.load(open('auto-pr-test.json'))['decision']['outcome'])")
+        if [ -f auto-pr-test.json ]; then
+          outcome=$(python -c "import json;print(json.load(open('auto-pr-test.json'))['decision']['outcome'])")
+        else
+          outcome=error
+        fi
         echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
         cat gate.md >> "$GITHUB_STEP_SUMMARY"
         exit $code
