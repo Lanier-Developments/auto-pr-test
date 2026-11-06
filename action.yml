@@ -1,0 +1,90 @@
+name: auto-pr-test
+description: Policy-as-code PR gate — tests, cross-family AI review, tamper-evident approval record
+author: Lanier Developments LLC
+
+branding:
+  icon: shield
+  color: purple
+
+inputs:
+  pr-number:
+    description: Pull request number (defaults to the triggering PR)
+    default: ${{ github.event.pull_request.number }}
+  policy:
+    description: Path to the repository policy
+    default: .auto-pr-test/policy.yaml
+  models:
+    description: Path to models.yaml (defaults to the bundled registry)
+    default: ""
+  routing:
+    description: Path to routing.yaml (defaults to the bundled routing policy)
+    default: ""
+  base-coverage:
+    description: Total coverage % of the base branch, if known, for the delta
+    default: ""
+  dry-run:
+    description: Review and record, but post nothing to the PR
+    default: "false"
+  skip-tests:
+    description: Skip the test command (reviews only)
+    default: "false"
+  python-version:
+    default: "3.12"
+  extras:
+    description: Optional extras to install — bedrock, gemini, or all
+    default: "all"
+  github-token:
+    default: ${{ github.token }}
+
+outputs:
+  outcome:
+    description: approve | recommend | needs_human | changes_requested | blocked
+    value: ${{ steps.gate.outputs.outcome }}
+
+runs:
+  using: composite
+  steps:
+    - uses: actions/setup-python@v5
+      with:
+        python-version: ${{ inputs.python-version }}
+        cache: pip
+
+    - name: Install auto-pr-test
+      shell: bash
+      run: |
+        if [ "${{ inputs.extras }}" != "" ]; then
+          pip install "${{ github.action_path }}[${{ inputs.extras }}]"
+        else
+          pip install "${{ github.action_path }}"
+        fi
+
+    - name: Run gate
+      id: gate
+      shell: bash
+      env:
+        GITHUB_TOKEN: ${{ inputs.github-token }}
+        AUTO_PR_TEST_MODELS: ${{ inputs.models }}
+        AUTO_PR_TEST_ROUTING: ${{ inputs.routing }}
+      run: |
+        set +e
+        args=(review --provider github --pr "${{ inputs.pr-number }}" --policy "${{ inputs.policy }}" --json auto-pr-test.json)
+        [ -n "${{ inputs.base-coverage }}" ] && args+=(--base-coverage "${{ inputs.base-coverage }}")
+        [ "${{ inputs.dry-run }}" = "true" ] && args+=(--dry-run)
+        [ "${{ inputs.skip-tests }}" = "true" ] && args+=(--skip-tests)
+        auto-pr-test "${args[@]}" | tee gate.md
+        code=$?
+        outcome=$(python -c "import json;print(json.load(open('auto-pr-test.json'))['decision']['outcome'])")
+        echo "outcome=$outcome" >> "$GITHUB_OUTPUT"
+        cat gate.md >> "$GITHUB_STEP_SUMMARY"
+        exit $code
+
+    - name: Upload evidence
+      if: always()
+      uses: actions/upload-artifact@v4
+      with:
+        name: auto-pr-test-evidence
+        path: |
+          auto-pr-test.json
+          gate.md
+          .auto-pr-test/ledger.jsonl
+        if-no-files-found: ignore

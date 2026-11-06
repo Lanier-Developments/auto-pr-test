@@ -1,0 +1,20 @@
+# Demo registry: two "families" of fake reviewer so the whole gate runs with no
+# credentials. Use with:  auto-pr-test --models policy/models.demo.yaml review ...
+# Never point a real repository policy at this file.
+models:
+  - id: fake/alpha
+    provider: fake
+    model: alpha
+    family: fake-alpha
+    tier: local
+    region: on-prem
+    status: approved
+    max_classification: restricted
+  - id: fake/beta
+    provider: fake
+    model: beta
+    family: fake-beta
+    tier: local
+    region: on-prem
+    status: approved
+    max_classification: restricted

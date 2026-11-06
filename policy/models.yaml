@@ -1,0 +1,67 @@
+# Model registry — same shape as ControlPlane's policy/models.yaml so an organisation
+# running ControlPlane can point auto-pr-test at the one it already governs.
+#
+# family:   the model lineage (anthropic | google | meta | qwen | ...). Concurrence
+#           requires reviewers from DIFFERENT families; two Claude sizes agreeing with
+#           each other is one opinion, not two.
+# tier:     local | cloud — where inference runs; routing rules key on it.
+# status:   approved | deprecated | retired. Retired is refused, never ignored.
+# max_classification: the most sensitive repository content this model may read.
+#           Repos declare their classification in .auto-pr-test/policy.yaml.
+
+models:
+  - id: bedrock/claude-sonnet-4-6
+    provider: bedrock
+    model: us.anthropic.claude-sonnet-4-6
+    family: anthropic
+    tier: cloud
+    region: us
+    status: approved
+    max_classification: internal
+    cost_per_1k_input: 0.003
+    cost_per_1k_output: 0.015
+
+  - id: gemini/gemini-2.5-pro
+    provider: gemini
+    model: gemini-2.5-pro
+    family: google
+    tier: cloud
+    region: us
+    status: approved
+    max_classification: internal
+    cost_per_1k_input: 0.00125
+    cost_per_1k_output: 0.01
+
+  - id: ollama/qwen3:8b
+    provider: ollama
+    model: qwen3:8b
+    family: qwen
+    tier: local
+    region: on-prem
+    status: approved
+    max_classification: restricted
+    cost_per_1k_input: 0.0
+    cost_per_1k_output: 0.0
+
+  - id: ollama/llama3.1:8b
+    provider: ollama
+    model: llama3.1:8b
+    family: meta
+    tier: local
+    region: on-prem
+    status: approved
+    max_classification: restricted
+    cost_per_1k_input: 0.0
+    cost_per_1k_output: 0.0
+
+  # Present on purpose: a retired entry must be refused by the gate, not skipped.
+  - id: ollama/llama2:7b
+    provider: ollama
+    model: llama2:7b
+    family: meta
+    tier: local
+    region: on-prem
+    status: retired
+    max_classification: restricted
+    cost_per_1k_input: 0.0
+    cost_per_1k_output: 0.0

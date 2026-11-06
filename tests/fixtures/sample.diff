@@ -1,0 +1,22 @@
+diff --git a/src/auto_pr_test/diff.py b/src/auto_pr_test/diff.py
+index 1111111..2222222 100644
+--- a/src/auto_pr_test/diff.py
++++ b/src/auto_pr_test/diff.py
+@@ -10,6 +10,9 @@ class Hunk:
+     old_start: int
+     new_start: int
+
++    def is_empty(self) -> bool:
++        return not self.lines
++
+     @property
+     def added(self):
+         out, n = [], self.new_start
+diff --git a/docs/notes.md b/docs/notes.md
+new file mode 100644
+index 0000000..3333333
+--- /dev/null
++++ b/docs/notes.md
+@@ -0,0 +1,2 @@
++# Notes
++Hello.

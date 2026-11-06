@@ -1,0 +1,77 @@
+# auto-pr-test repository policy. Lives in the repo it governs, reviewed like code.
+#
+# This file is auto-pr-test's own policy — the gate dogfoods itself. Copy it to a
+# target repo's .auto-pr-test/policy.yaml and adjust the tiers.
+
+version: 1
+
+# Most sensitive content in this repository. Routing rules (policy/routing.yaml)
+# decide which models may read it. public | internal | confidential | restricted
+classification: public
+
+# Reviewers. Concurrence needs at least `min_families` distinct families to agree.
+# Reviewers are drawn in order; a reviewer that policy denies is skipped and logged.
+reviewers:
+  - bedrock/claude-sonnet-4-6
+  - gemini/gemini-2.5-pro
+  - ollama/qwen3:8b
+min_families: 2
+
+# Risk tiers. A PR takes the HIGHEST tier of any file it touches. First match wins
+# within a tier list; a file matching no tier is `default_tier`.
+#
+#   auto_approve:    the gate may approve and (if the provider allows) merge
+#   recommend:       the gate posts an approval recommendation; a human merges
+#   human_required:  the gate reviews but never recommends approval
+tiers:
+  low:
+    action: auto_approve
+    paths:
+      - "docs/**"
+      - "**/*.md"
+      - ".github/ISSUE_TEMPLATE/**"
+  medium:
+    action: recommend
+    paths:
+      - "src/**"
+      - "tests/**"
+  high:
+    action: human_required
+    paths:
+      - ".auto-pr-test/**"           # the policy itself
+      - "policy/**"          # model registry and routing
+      - ".github/workflows/**"
+      - "action.yml"
+      - "pyproject.toml"
+      - "**/*.mcp.json"      # MCP server configs — blast radius, see mcp-placard
+      - "**/mcp.json"
+default_tier: medium
+
+# Fast-agreement flag. When every reviewer approves a high-tier change with no
+# findings at all, the gate records a `fast_agreement` warning instead of treating
+# unanimity as confidence. Independent reviewers finding nothing on risky code is
+# itself a finding.
+fast_agreement_tiers: [high]
+
+# Testing. The gate runs the suite and reports the coverage delta against the base
+# branch. `min_coverage_delta` is a floor on the change (negative allows a drop).
+testing:
+  command: "python -m pytest --cov=auto_pr_test --cov-report=json:coverage.json -q"
+  coverage_file: coverage.json
+  min_coverage_delta: -0.5
+  generate_missing_tests: true     # ask the reviewers for tests covering uncovered changed lines
+  require_pass: true
+
+# Hard blocks — any match fails the gate regardless of review outcome.
+blocks:
+  secrets: true                    # heuristic secret scan on added lines
+  max_changed_lines: 2000
+  forbidden_paths:
+    - ".env"
+    - "**/*.pem"
+    - "**/id_rsa*"
+
+# Evidence ledger. Every decision — approve, recommend, block, refusal — is appended.
+ledger:
+  path: ".auto-pr-test/ledger.jsonl"
+  store_digests_only: true         # SHA-256 of diff and review text, never the text

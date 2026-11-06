@@ -1,0 +1,53 @@
+# Routing policy: may THIS model read THIS repository's content?
+#
+# Evaluated top to bottom; first match decides; no match is a deny. Same contract
+# as ControlPlane's routing.yaml — a decision, a reason and a rule id on every answer,
+# OPA-shaped so it can move to Rego later without changing the gate.
+#
+# Match keys (absent key matches anything):
+#   classification  the repo's declared classification (.auto-pr-test/policy.yaml)
+#   tier            local | cloud
+#   status          approved | deprecated | retired
+#   region          where inference runs
+#   family          model family
+
+rules:
+  - id: retired-model-refused
+    match: { status: retired }
+    decision: deny
+    reason: Model is retired in the registry
+
+  - id: restricted-stays-local
+    match: { classification: restricted, tier: cloud }
+    decision: deny
+    reason: Restricted source may not be sent to an external provider
+
+  - id: confidential-stays-local
+    match: { classification: confidential, tier: cloud }
+    decision: deny
+    reason: Confidential source may not be sent to an external provider
+
+  - id: local-approved
+    match: { tier: local, status: approved }
+    decision: allow
+    reason: Self-hosted inference is approved for all classifications
+
+  - id: cloud-internal-us
+    match: { classification: internal, tier: cloud, status: approved, region: [us] }
+    decision: allow
+    reason: Internal source is approved for US-region cloud inference
+
+  - id: cloud-public-us
+    match: { classification: public, tier: cloud, status: approved, region: [us] }
+    decision: allow
+    reason: Public source is approved for US-region cloud inference
+
+  - id: residency-us-only
+    match: { tier: cloud }
+    decision: deny
+    reason: Cloud inference is permitted in US regions only
+
+  - id: default-deny
+    match: {}
+    decision: deny
+    reason: No rule permits this combination
