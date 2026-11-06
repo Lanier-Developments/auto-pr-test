@@ -44,13 +44,11 @@ outputs:
 runs:
   using: composite
   steps:
+    # No pip cache: setup-python's cache can only key on files inside the
+    # consumer workspace, which may not be a Python project at all.
     - uses: actions/setup-python@v5
       with:
         python-version: ${{ inputs.python-version }}
-        cache: pip
-        # The consumer repo may not be a Python project; cache against the
-        # action's own dependency file, not the workspace's.
-        cache-dependency-path: ${{ github.action_path }}/pyproject.toml
 
     - name: Install auto-pr-test
       shell: bash
