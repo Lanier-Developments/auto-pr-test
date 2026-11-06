@@ -76,7 +76,12 @@ Respond with ONLY a JSON object, no prose, no markdown fence, matching exactly:
 }
 Rules: any "blocker" finding requires verdict "request_changes". Do not approve a
 change you did not actually read. Empty findings on a non-trivial change should come
-with low confidence."""
+with low confidence.
+Never report that a version, release, model identifier, or package "does not exist",
+"is not yet released", or "is not a known identifier" based on your own knowledge:
+your training has a cutoff and the repository is newer than you. Only flag a version
+or identifier if the diff itself shows an inconsistency (e.g., two places pinning
+different values for the same thing) or the repository's own files contradict it."""
 
 
 def build_prompt(title: str, body: str, diff: Diff, risk_tier: str,

@@ -39,7 +39,7 @@ def test_auto_approve_on_low_tier(repo, pr, registry):
 def test_same_family_is_one_opinion(repo, pr, sample_diff, registry):
     # Only the anthropic reviewer approves; others request changes -> 1 family < 2.
     _set_policy(repo)
-    ad = fake_adapter({"gemini/gemini-2.5-pro": review_json("request_changes"),
+    ad = fake_adapter({"gemini/gemini-3.1-pro-preview": review_json("request_changes"),
                        "ollama/qwen3:8b": review_json("comment")})
     g = gate.run(pr, sample_diff, cwd=repo, registry=registry, adapters=ad)
     assert g.decision.outcome == "needs_human"
@@ -52,7 +52,7 @@ def test_blocker_finding_requests_changes(repo, pr, sample_diff, registry):
     bad = review_json("request_changes", findings=[
         {"path": "src/auto_pr_test/diff.py", "line": 13, "severity": "blocker",
          "title": "Unsafe", "detail": "no"}])
-    ad = fake_adapter({"gemini/gemini-2.5-pro": bad})
+    ad = fake_adapter({"gemini/gemini-3.1-pro-preview": bad})
     g = gate.run(pr, sample_diff, cwd=repo, registry=registry, adapters=ad)
     assert g.decision.outcome == "changes_requested"
     assert len(g.decision.blockers) == 1
@@ -75,13 +75,13 @@ def test_confidential_repo_refuses_cloud_reviewers(repo, pr, sample_diff, regist
     assert len(g.skipped) == 2 and "confidential-stays-local" in g.skipped[0]
     assert g.decision.outcome == "recommend"
     routing = {r["model"]: r["allowed"] for r in g.ledger_entry["routing"]}
-    assert routing == {"bedrock/claude-sonnet-4-6": False, "gemini/gemini-2.5-pro": False,
+    assert routing == {"bedrock/claude-sonnet-4-6": False, "gemini/gemini-3.1-pro-preview": False,
                        "ollama/qwen3:8b": True}
 
 
 def test_provider_error_is_non_approval(repo, pr, sample_diff, registry):
     _set_policy(repo)
-    ad = fake_adapter({"gemini/gemini-2.5-pro": RuntimeError("timeout"),
+    ad = fake_adapter({"gemini/gemini-3.1-pro-preview": RuntimeError("timeout"),
                        "ollama/qwen3:8b": "not json at all"})
     g = gate.run(pr, sample_diff, cwd=repo, registry=registry, adapters=ad)
     assert g.decision.outcome == "needs_human"

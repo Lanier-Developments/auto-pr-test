@@ -55,7 +55,7 @@ def test_policy_check_catches_impossible_min_families(tmp_path, capsys):
     (tmp_path / ".auto-pr-test").mkdir()
     pol = yaml.safe_load((ROOT / ".auto-pr-test/policy.yaml").read_text())
     pol["classification"] = "restricted"          # only ollama/qwen3 may read it
-    pol["reviewers"] = ["bedrock/claude-sonnet-4-6", "gemini/gemini-2.5-pro"]
+    pol["reviewers"] = ["bedrock/claude-sonnet-4-6", "gemini/gemini-3.1-pro-preview"]
     (tmp_path / ".auto-pr-test/policy.yaml").write_text(yaml.safe_dump(pol))
     code = cli.main(["--cwd", str(tmp_path), "--models", str(ROOT / "policy/models.yaml"),
                      "--routing", str(ROOT / "policy/routing.yaml"), "policy-check"])

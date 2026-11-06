@@ -13,7 +13,7 @@ classification: public
 # Reviewers are drawn in order; a reviewer that policy denies is skipped and logged.
 reviewers:
   - bedrock/claude-sonnet-4-6
-  - gemini/gemini-2.5-pro
+  - gemini/gemini-3.1-pro-preview
   - ollama/qwen3:8b
 min_families: 2
 

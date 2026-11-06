@@ -61,8 +61,10 @@ def cmd_review(args) -> int:
         elif run.decision.outcome == "changes_requested":
             provider.request_changes(pr.number, "auto-pr-test: see findings above.")
 
-    # Exit code is the merge signal for CI: 0 only when the gate is satisfied.
-    return 0 if run.decision.outcome in ("approve", "recommend") else 1
+    # Exit code: 0 unless the gate found something adverse. `needs_human` is a healthy
+    # outcome — the commit status stays "pending" and carries the merge signal for
+    # required checks; a red job is reserved for changes_requested/blocked/error.
+    return 0 if run.decision.outcome in ("approve", "recommend", "needs_human") else 1
 
 
 def cmd_verify(args) -> int:
